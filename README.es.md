@@ -35,6 +35,33 @@ El desarrollo se planteó de forma incremental: primero una versión simple func
 - Diseño responsive para escritorio, tablet y móvil.
 - Scripts de datos demo para pruebas locales y despliegue de portfolio.
 
+## Capturas
+
+### Inicio Público Y Dashboard Privado
+
+<p>
+  <img src="docs/screenshots/home.png" alt="Página de inicio pública de Chronic Project" width="49%">
+  <img src="docs/screenshots/dashboard.png" alt="Dashboard privado con tarjetas de resumen de glucemias" width="49%">
+</p>
+
+### Glucemias Y Formulario
+
+<p>
+  <img src="docs/screenshots/glucose-records.png" alt="Tabla de glucemias y resumen del periodo seleccionado" width="49%">
+  <img src="docs/screenshots/glucose-form.png" alt="Formulario modal para crear una glucemia" width="49%">
+</p>
+
+### Perfil Y Modo Oscuro
+
+<p>
+  <img src="docs/screenshots/profile.png" alt="Vista de perfil de usuario con resumen de salud" width="49%">
+  <img src="docs/screenshots/dark-mode.png" alt="Dashboard en modo oscuro" width="49%">
+</p>
+
+### Diseño Responsive
+
+![Vistas responsive en tablet y móvil](docs/screenshots/responsive-showcase.png)
+
 ## Stack Tecnológico
 
 **Backend**

@@ -35,6 +35,33 @@ The development followed an incremental approach: first a simple working version
 - Responsive frontend for desktop, tablet and mobile.
 - Demo data scripts for local testing and portfolio deployment.
 
+## Screenshots
+
+### Public Home And Private Dashboard
+
+<p>
+  <img src="docs/screenshots/home.png" alt="Chronic Project public home page" width="49%">
+  <img src="docs/screenshots/dashboard.png" alt="Private dashboard with glucose summary cards" width="49%">
+</p>
+
+### Glucose Records And Form
+
+<p>
+  <img src="docs/screenshots/glucose-records.png" alt="Glucose records table and selected period summary" width="49%">
+  <img src="docs/screenshots/glucose-form.png" alt="Modal form for creating a glucose record" width="49%">
+</p>
+
+### Profile And Dark Mode
+
+<p>
+  <img src="docs/screenshots/profile.png" alt="User profile view with health summary" width="49%">
+  <img src="docs/screenshots/dark-mode.png" alt="Dark mode dashboard" width="49%">
+</p>
+
+### Responsive Layouts
+
+![Responsive tablet and mobile views](docs/screenshots/responsive-showcase.png)
+
 ## Tech Stack
 
 **Backend**
