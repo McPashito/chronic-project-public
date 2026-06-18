@@ -12,6 +12,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "https://chronic-project-public.vercel.app",
         "https://chronic-project-frontend.vercel.app",
         "https://chronic-project-frontend-git-main-mcpashitos-projects.vercel.app",
         "https://chronic-project-frontend-pvwgs1ofy-mcpashitos-projects.vercel.app",
