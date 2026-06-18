@@ -1,6 +1,8 @@
 # Chronic Project
 
-[English](README.md) | Español
+[English](README.md) · Español
+
+Aplicación full-stack para seguimiento de glucemias construida con FastAPI, PostgreSQL y Vue.
 
 Chronic Project es una aplicación web full-stack orientada al seguimiento de glucemias.
 
