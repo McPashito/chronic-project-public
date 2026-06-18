@@ -1,0 +1,74 @@
+:root {
+  --color-primary: #2563eb;
+  --color-primary-dark: #1e40af;
+
+  --color-primary-muted: #81bedec0;
+
+  --color-bg: #ffffff;
+  --color-surface: #f3f6fb;
+
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+
+  --color-border: #d8dee9;
+
+  --color-success: #15803d;
+  --color-warning: #b45309;
+  --color-danger: #b91c1c;
+
+  --shadow-soft: 0 4px 14px rgba(15, 23, 42, 0.08);
+
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --color-success-soft: rgba(25, 135, 84, 0.08);
+  --color-success-border: rgba(25, 135, 84, 0.25);
+
+  --dashboard-blue-bg: #eaf4ff;
+  --dashboard-blue-icon: #2563eb;
+
+  --dashboard-red-bg: #ffecec;
+  --dashboard-red-icon: #dc2626;
+
+  --dashboard-green-bg: #dcfce7;
+  --dashboard-green-icon: #15803d;
+
+  --dashboard-yellow-bg: #fff7d6;
+  --dashboard-yellow-icon: #ca8a04;
+}
+
+.private-layout.dark-mode {
+  --color-primary: #38bdf8;
+  --color-primary-dark: #0ea5e9;
+
+  --color-primary-muted: rgba(56, 189, 248, 0.22);
+
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+
+  --color-text: #f8fafc;
+  --color-text-muted: #cbd5e1;
+
+  --color-border: #334155;
+
+  --color-success: #4ade80;
+  --color-warning: #facc15;
+  --color-danger: #f87171;
+
+  --shadow-soft: 0 4px 18px rgba(0, 0, 0, 0.35);
+
+  --color-success-soft: rgba(74, 222, 128, 0.14);
+  --color-success-border: rgba(74, 222, 128, 0.35);
+
+  --dashboard-blue-bg: #172554;
+  --dashboard-blue-icon: #38bdf8;
+
+  --dashboard-red-bg: #3f1d1d;
+  --dashboard-red-icon: #f87171;
+
+  --dashboard-green-bg: #123524;
+  --dashboard-green-icon: #4ade80;
+
+  --dashboard-yellow-bg: #3a2f12;
+  --dashboard-yellow-icon: #facc15;
+}
