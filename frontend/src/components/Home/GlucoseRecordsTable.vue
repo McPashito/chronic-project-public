@@ -285,6 +285,12 @@ function goToNextPage() {
   flex-wrap: wrap;
 }
 
+.glucose-table-full .glucose-value-wrapper {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
 .glucose-status-badge {
   display: inline-flex;
   align-items: center;

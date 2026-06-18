@@ -384,13 +384,18 @@ Charts and exports are left as future improvements.
 
 ## Deployment Notes
 
-A possible deployment setup:
+Current public deployment:
 
-- Backend: Render
+- Frontend: Vercel - https://chronic-project-public.vercel.app
+- Backend: Render - https://chronic-project-public.onrender.com
 - Database: Neon PostgreSQL
-- Frontend: Vercel
 
-Backend production command example:
+Required environment variable names, without values:
+
+- Render backend: `DATABASE_URL`, `SECRET_KEY`
+- Vercel frontend: `VITE_API_BASE_URL`
+
+Backend production command:
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -403,21 +408,17 @@ alembic upgrade head
 python scripts/seed_demo_data.py
 ```
 
-To keep demo data fresh, configure a daily scheduled job in Render:
+Demo data can be refreshed manually from a local environment configured with the public database URL:
 
 ```bash
 python scripts/seed_new_glucose_records.py
 ```
 
-This keeps recent demo glucose records available for views such as "last 7 days".
-
-When deploying the frontend, set:
-
-```env
-VITE_API_BASE_URL=https://your-backend-url
-```
+An automatic daily Render Cron Job was considered, but it is not enabled in the free portfolio deployment because it adds platform cost. The refresh script is kept ready for that scenario.
 
 If the deployed frontend uses a new domain, the backend CORS configuration must allow that origin.
+
+More details: [Deployment Guide](docs/deployment.md).
 
 ## Current Limitations
 

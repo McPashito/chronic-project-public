@@ -384,11 +384,16 @@ Las gráficas y exportaciones quedan como mejoras futuras.
 
 ## Notas De Despliegue
 
-Una configuración posible:
+Despliegue público actual:
 
-- Backend: Render
+- Frontend: Vercel - https://chronic-project-public.vercel.app
+- Backend: Render - https://chronic-project-public.onrender.com
 - Base de datos: Neon PostgreSQL
-- Frontend: Vercel
+
+Variables de entorno necesarias, sin valores reales:
+
+- Backend en Render: `DATABASE_URL`, `SECRET_KEY`
+- Frontend en Vercel: `VITE_API_BASE_URL`
 
 Comando de producción para backend:
 
@@ -403,21 +408,17 @@ alembic upgrade head
 python scripts/seed_demo_data.py
 ```
 
-Para mantener vivos los datos demo recientes, se puede configurar un cron diario en Render:
+Los datos demo recientes se pueden refrescar manualmente desde un entorno local configurado con la URL de la base de datos pública:
 
 ```bash
 python scripts/seed_new_glucose_records.py
 ```
 
-Así las vistas tipo "últimos 7 días" siguen teniendo datos recientes aunque pasen los días.
-
-En el frontend desplegado:
-
-```env
-VITE_API_BASE_URL=https://your-backend-url
-```
+Se valoró activar un Render Cron Job diario, pero no se ha habilitado en el despliegue gratuito de portfolio porque añade coste de plataforma. El script queda preparado para ese escenario.
 
 Si el frontend usa un dominio nuevo, el backend debe permitir ese origen en la configuración de CORS.
+
+Más detalles: [Guía de despliegue](docs/deployment.md).
 
 ## Limitaciones Actuales
 

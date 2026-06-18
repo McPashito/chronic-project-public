@@ -7,6 +7,8 @@ import { getCurrentUser } from '@/services/userService'
 
 import MailIcon from '@/components/Icons/MailIcon.vue'
 import LockerIcon from '@/components/Icons/LockerIcon.vue'
+import EyeDownIcon from '@/components/Icons/EyeDownIcon.vue'
+import EyeUpIcon from '@/components/Icons/EyeUpIcon.vue'
 
 const router = useRouter()
 
@@ -82,7 +84,8 @@ async function handleLogin() {
               :aria-label="showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'"
               @click="showPassword = !showPassword"
             >
-              {{ showPassword ? '🙈' : '👁️' }}
+              <EyeUpIcon v-if="showPassword" />
+              <EyeDownIcon v-else />
             </button>
           </div>
 
@@ -110,12 +113,21 @@ async function handleLogin() {
 </template>
 <style scoped>
 .password-toggle {
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  justify-content: center;
+  width: 3rem;
   border: none;
-  background: transparent;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
   cursor: pointer;
-  padding: 0 0.8rem;
-  font-size: 1rem;
   flex-shrink: 0;
+}
+.password-toggle svg {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 .login {
   display: flex;
