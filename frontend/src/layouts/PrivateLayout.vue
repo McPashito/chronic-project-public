@@ -1,8 +1,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { RouterView } from 'vue-router'
+import { RouterView, useRouter } from 'vue-router'
 import AppSideBar from '@/components/layout/AppSideBar.vue'
 import AppPrivateTop from '@/components/layout/AppPrivateTop.vue'
+import { useCurrentUser } from '@/composables/useCurrentUser'
+import { handleAuthError } from '@/utils/handleAuthError'
+
+const router = useRouter()
+const { loadCurrentUser } = useCurrentUser()
 
 const sidebarOpen = ref(false)
 
@@ -11,6 +16,16 @@ const isDarkMode = ref(localStorage.getItem('chronic_theme') === 'dark')
 const handleThemeChange = (event) => {
   isDarkMode.value = event.detail === 'dark'
 }
+
+async function initializeCurrentUser() {
+  try {
+    await loadCurrentUser()
+  } catch (error) {
+    handleAuthError(error, router)
+  }
+}
+
+initializeCurrentUser()
 
 onMounted(() => {
   window.addEventListener('chronic-theme-change', handleThemeChange)

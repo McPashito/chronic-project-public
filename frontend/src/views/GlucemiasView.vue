@@ -11,7 +11,8 @@ import {
   getGlucoseRecords,
   updateGlucoseRecord,
 } from '@/services/glucoseService'
-import { getCurrentUser, updateCurrentUser } from '@/services/userService'
+import { updateCurrentUser } from '@/services/userService'
+import { useCurrentUser } from '@/composables/useCurrentUser'
 import GlucoseRecordFormModal from '@/components/Home/GlucoseRecordFormModal.vue'
 import GlucoseHealthSummary from '@/components/Home/GlucoseHealthSummary.vue'
 import PremiumPlanForm from '@/components/Home/PremiumPlanForm.vue'
@@ -26,7 +27,10 @@ const momentOfDay = ref('')
 const glucoseRecords = ref([])
 const isLoadingRecords = ref(false)
 const recordsError = ref('')
-const currentUser = ref(null)
+const hasSearchedRecords = ref(false)
+const appliedStartDate = ref('')
+const appliedEndDate = ref('')
+const { currentUser, setCurrentUser } = useCurrentUser()
 const sortOrder = ref('desc')
 
 const isRecordModalOpen = ref(false)
@@ -92,42 +96,60 @@ const averageGlucoseValue = computed(() => {
   return Math.round(total / glucoseRecords.value.length)
 })
 
-const shouldShowPremiumMessage = computed(() => {
+const historyAccessState = computed(() => {
   if (!currentUser.value || currentUser.value.subscription_type !== 'standard') {
-    return false
+    return 'full'
   }
 
-  if (!startDate.value) {
-    return false
-  }
-
-  const today = new Date()
   const oldestAllowedDate = new Date()
+  oldestAllowedDate.setHours(0, 0, 0, 0)
+  oldestAllowedDate.setDate(oldestAllowedDate.getDate() - 30)
 
-  oldestAllowedDate.setDate(today.getDate() - 30)
+  if (appliedEndDate.value) {
+    const selectedEndDate = new Date(`${appliedEndDate.value}T00:00:00`)
 
-  const selectedStartDate = new Date(startDate.value)
+    if (selectedEndDate < oldestAllowedDate) {
+      return 'blocked'
+    }
+  }
 
-  return selectedStartDate < oldestAllowedDate
+  if (appliedStartDate.value) {
+    const selectedStartDate = new Date(`${appliedStartDate.value}T00:00:00`)
+
+    if (selectedStartDate < oldestAllowedDate) {
+      return 'partial'
+    }
+  }
+
+  return 'full'
 })
 
-async function loadCurrentUser() {
-  try {
-    currentUser.value = await getCurrentUser()
-  } catch (error) {
-    if (handleAuthError(error, router)) {
-      recordsError.value = 'Tu sesión ha caducado. Te redirigimos al inicio de sesión.'
-      return
-    }
-
-    recordsError.value = error.message
+const premiumWarningContent = computed(() => {
+  if (!hasSearchedRecords.value || historyAccessState.value === 'full') {
+    return null
   }
-}
-loadCurrentUser()
+
+  if (historyAccessState.value === 'blocked') {
+    return {
+      title: 'Periodo fuera del historial disponible',
+      message:
+        'El intervalo seleccionado queda fuera de los últimos 30 días incluidos en tu plan Standard. Ajusta las fechas o hazte Premium para consultar periodos anteriores.',
+    }
+  }
+
+  return {
+    title: 'Información parcial del periodo seleccionado',
+    message:
+      'El intervalo solicitado supera los 30 días disponibles en tu cuenta Standard. Los resultados mostrados corresponden únicamente al tramo del periodo incluido en tu plan.',
+  }
+})
 
 async function handleSearch() {
   isLoadingRecords.value = true
   recordsError.value = ''
+  hasSearchedRecords.value = true
+  appliedStartDate.value = startDate.value
+  appliedEndDate.value = endDate.value
 
   try {
     const records = await getGlucoseRecords(startDate.value, endDate.value, momentOfDay.value)
@@ -282,7 +304,7 @@ async function handlePremiumPlanChange(newPlan) {
       subscription_type: newPlan,
     })
 
-    currentUser.value = updatedUser
+    setCurrentUser(updatedUser)
     premiumSuccess.value = `Plan actualizado a ${newPlan === 'premium' ? 'Premium' : 'Standard'} correctamente.`
 
     await handleSearch()
@@ -306,7 +328,7 @@ async function handlePremiumPlanChange(newPlan) {
 
 <template>
   <AppPrivateStart
-    title=", consulta, filtra y gestiona tus registros de glucemias"
+    title="consulta, filtra y gestiona tus registros de glucemias"
     main="Mis glucemias"
     variant="active"
     @add-glucose="openCreateRecordModal"
@@ -365,24 +387,26 @@ async function handlePremiumPlanChange(newPlan) {
       <button type="button" @click="handlePopularSearch(90)">Últimos 90 días</button>
     </div>
   </section>
-  <section class="glucose-records-panel">
-    <div class="records-panel-header">
-      <div v-if="shouldShowPremiumMessage" class="premium-records-warning">
-        <div>
-          <h3>Historial limitado en cuenta standard</h3>
-          <p>
-            Tu cuenta standard solo permite consultar registros de los últimos 30 días. Hazte
-            premium para acceder a todo tu historial.
-          </p>
-        </div>
-
-        <button type="button" class="premium-records-button" @click="openPremiumModal">
-          Hazte premium
-        </button>
+  <section class="glucose-records-panel" :aria-busy="isLoadingRecords">
+    <div
+      v-if="premiumWarningContent && !isLoadingRecords && !recordsError"
+      class="premium-records-warning"
+    >
+      <div>
+        <h3>{{ premiumWarningContent.title }}</h3>
+        <p>{{ premiumWarningContent.message }}</p>
       </div>
+
+      <button type="button" class="premium-records-button" @click="openPremiumModal">
+        Hazte premium
+      </button>
+    </div>
+
+    <div class="records-panel-header">
       <div class="records-panel-title">
         <h2>Listado de glucemias</h2>
-        <span>{{ glucoseRecords.length }} registros</span>
+        <span v-if="hasSearchedRecords">{{ glucoseRecords.length }} registros</span>
+        <span v-else>Sin búsqueda</span>
       </div>
 
       <div class="records-panel-order">
@@ -395,14 +419,23 @@ async function handlePremiumPlanChange(newPlan) {
       </div>
     </div>
 
-    <div v-if="isLoadingRecords" class="records-state">Cargando glucemias...</div>
+    <div v-if="isLoadingRecords" class="records-state" role="status" aria-live="polite">
+      Cargando glucemias...
+    </div>
 
-    <div v-else-if="recordsError" class="records-state records-state-error">
+    <div v-else-if="recordsError" class="records-state records-state-error" role="alert">
       {{ recordsError }}
     </div>
 
+    <div v-else-if="!hasSearchedRecords" class="records-state">
+      Selecciona un periodo o utiliza una búsqueda rápida para consultar tus glucemias.
+    </div>
+
     <div v-else-if="glucoseRecords.length === 0" class="records-state">
-      No hay glucemias para los filtros seleccionados.
+      <template v-if="historyAccessState === 'blocked'">
+        No se pueden consultar registros de este periodo con tu plan Standard.
+      </template>
+      <template v-else>No hay glucemias para los filtros seleccionados.</template>
     </div>
 
     <GlucoseRecordsTable
@@ -413,6 +446,7 @@ async function handlePremiumPlanChange(newPlan) {
       @edit-record="openEditRecordModal"
     />
     <GlucoseHealthSummary
+      v-if="hasSearchedRecords && !isLoadingRecords && !recordsError"
       class="glucose-summary-space"
       title="Resumen del periodo seleccionado"
       variant="wide"
@@ -817,7 +851,7 @@ async function handlePremiumPlanChange(newPlan) {
   .premium-records-warning {
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: 0;
+    margin-bottom: 1rem;
     padding: 0.9rem 1rem;
     gap: 1rem;
   }

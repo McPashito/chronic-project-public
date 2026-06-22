@@ -15,7 +15,8 @@ import PeopleIcon from '@/components/Icons/PeopleIcon.vue'
 import ScheduleIcon from '@/components/Icons/ScheduleIcon.vue'
 import SecurityIcon from '@/components/Icons/SecurityIcon.vue'
 
-import { getCurrentUser, updateCurrentUser } from '@/services/userService'
+import { updateCurrentUser } from '@/services/userService'
+import { useCurrentUser } from '@/composables/useCurrentUser'
 import { changePassword } from '@/services/securityService'
 import { getGlucoseRecords } from '@/services/glucoseService'
 import { handleAuthError } from '@/utils/handleAuthError'
@@ -24,10 +25,10 @@ import PencilIcon from '@/components/Icons/PencilIcon.vue'
 
 const router = useRouter()
 
-const currentUser = ref(null)
+const { currentUser, isCurrentUserLoading, currentUserError, setCurrentUser } = useCurrentUser()
 const glucoseRecords = ref([])
-const profileError = ref('')
-const isLoadingProfile = ref(false)
+const glucoseRecordsError = ref('')
+const isLoadingGlucoseRecords = ref(false)
 
 const isProfileModalOpen = ref(false)
 const profileModalMode = ref('edit-profile')
@@ -139,7 +140,7 @@ async function handleSubmitProfileModal(formData) {
   try {
     if (profileModalMode.value === 'edit-profile') {
       const updatedUser = await updateCurrentUser(formData)
-      currentUser.value = updatedUser
+      setCurrentUser(updatedUser)
       profileModalSuccess.value = 'Perfil actualizado correctamente.'
     } else {
       await changePassword(formData)
@@ -161,26 +162,25 @@ async function handleSubmitProfileModal(formData) {
     isSubmittingProfileModal.value = false
   }
 }
-async function loadProfileData() {
-  isLoadingProfile.value = true
-  profileError.value = ''
+async function loadProfileGlucoseRecords() {
+  isLoadingGlucoseRecords.value = true
+  glucoseRecordsError.value = ''
 
   try {
-    currentUser.value = await getCurrentUser()
     glucoseRecords.value = await getGlucoseRecords()
   } catch (error) {
     if (handleAuthError(error, router)) {
-      profileError.value = 'Tu sesión ha caducado. Te redirigimos al inicio de sesión.'
+      glucoseRecordsError.value = 'Tu sesión ha caducado. Te redirigimos al inicio de sesión.'
       return
     }
 
-    profileError.value = error.message || 'No se pudo cargar la información del perfil.'
+    glucoseRecordsError.value = error.message || 'No se pudo cargar el resumen de glucemias.'
   } finally {
-    isLoadingProfile.value = false
+    isLoadingGlucoseRecords.value = false
   }
 }
 
-loadProfileData()
+loadProfileGlucoseRecords()
 
 async function handlePremiumPlanChange(newPlan) {
   if (!currentUser.value) return
@@ -197,7 +197,7 @@ async function handlePremiumPlanChange(newPlan) {
       subscription_type: newPlan,
     })
 
-    currentUser.value = updatedUser
+    setCurrentUser(updatedUser)
     premiumSuccess.value = `Plan actualizado a ${newPlan === 'premium' ? 'Premium' : 'Standard'} correctamente.`
 
     setTimeout(() => {
@@ -219,19 +219,30 @@ async function handlePremiumPlanChange(newPlan) {
 
 <template>
   <AppPrivateStart
-    title=", consulta y gestiona tu información personal"
+    title="consulta y gestiona tu información personal"
     main="Mi perfil"
     variant="inactive"
   />
 
-  <section class="profile-main-flex">
-    <div v-if="isLoadingProfile" class="profile-state">Cargando perfil...</div>
-
-    <div v-else-if="profileError" class="profile-state profile-state-error">
-      {{ profileError }}
+  <section class="profile-main-flex" :aria-busy="isCurrentUserLoading && !currentUser">
+    <div
+      v-if="isCurrentUserLoading && !currentUser"
+      class="profile-state"
+      role="status"
+      aria-live="polite"
+    >
+      Cargando perfil...
     </div>
 
-    <template v-else>
+    <div
+      v-else-if="currentUserError && !currentUser"
+      class="profile-state profile-state-error"
+      role="alert"
+    >
+      {{ currentUserError }}
+    </div>
+
+    <template v-else-if="currentUser">
       <section class="profile-user-grid">
         <div class="profile-user-logo">
           {{ userInitials }}
@@ -258,7 +269,7 @@ async function handlePremiumPlanChange(newPlan) {
         </button>
       </section>
 
-      <section class="profile-details-grid">
+      <section class="profile-details-grid" :aria-busy="isLoadingGlucoseRecords">
         <article class="profile-extended-info-flex">
           <div class="info-flex info-head">
             <div class="info-icon"><PeopleIcon /></div>
@@ -349,7 +360,16 @@ async function handlePremiumPlanChange(newPlan) {
           </button>
         </article>
 
+        <div v-if="isLoadingGlucoseRecords" class="profile-state" role="status" aria-live="polite">
+          Cargando resumen de glucemias...
+        </div>
+
+        <div v-else-if="glucoseRecordsError" class="profile-state profile-state-error" role="alert">
+          {{ glucoseRecordsError }}
+        </div>
+
         <GlucoseHealthSummary
+          v-else
           title="Resumen de tu salud"
           variant="compact"
           :highest-record="highestGlucoseRecord"
@@ -365,17 +385,6 @@ async function handlePremiumPlanChange(newPlan) {
         </strong>
 
         <article class="preferences-actions-row">
-          <button type="button" class="preferences-actions-flex" @click="goToSettings">
-            <div class="preferences-action-icon"><ConfigIcon /></div>
-
-            <div class="preferences-action-text">
-              <strong>Notificaciones</strong>
-              <span>Elige cuándo deseas recibir avisos sobre tus registros.</span>
-            </div>
-
-            <span class="preferences-actions-arrow">›</span>
-          </button>
-
           <button type="button" class="preferences-actions-flex" @click="goToSettings">
             <div class="preferences-action-icon"><EyeUpIcon /></div>
 

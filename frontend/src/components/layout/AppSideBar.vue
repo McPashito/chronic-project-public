@@ -8,9 +8,10 @@ import DashIcon from '../Icons/DashIcon.vue'
 import DropIcon from '../Icons/DropIcon.vue'
 import LogInIcon from '../Icons/LogInIcon.vue'
 import LogOutIcon from '../Icons/LogOutIcon.vue'
-import SecurityIcon from '../Icons/SecurityIcon.vue'
+import { useCurrentUser } from '@/composables/useCurrentUser'
 
 const router = useRouter()
+const { clearCurrentUser } = useCurrentUser()
 const showLogoutModal = ref(false)
 const emit = defineEmits(['close-sidebar'])
 
@@ -24,6 +25,7 @@ function cancelLogout() {
 
 function confirmLogout() {
   localStorage.removeItem('access_token')
+  clearCurrentUser()
   router.push('/login')
 }
 </script>
@@ -60,23 +62,9 @@ function confirmLogout() {
         <span>Salir</span>
       </button>
     </nav>
-    <div class="security">
-      <div class="security-icon">
-        <SecurityIcon />
-        <h3>Tus datos está seguros</h3>
-      </div>
-      <div class="security-text">
-        <p>Cumplimos con los más altos estándares de privacidad y proteccion de datos</p>
-      </div>
-    </div>
   </section>
   <div v-if="showLogoutModal" class="logout-modal-backdrop">
-    <div
-      class="logout-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="logout-modal-title"
-    >
+    <div class="logout-modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
       <h2 id="logout-modal-title">¿De verdad deseas cerrar sesión?</h2>
 
       <div class="logout-modal-actions">
@@ -160,7 +148,8 @@ function confirmLogout() {
   justify-items: center;
   gap: 0.5rem;
   justify-content: center;
-  border-bottom: 2px solid var(--color-border);
+  margin-top: auto;
+  border-top: 2px solid var(--color-border);
   padding: 1rem;
 }
 .log-out-comp {
@@ -197,37 +186,6 @@ function confirmLogout() {
   color: var(--color-primary);
 }
 
-.security {
-  display: flex;
-  flex-direction: column;
-  justify-items: start;
-
-  border: 1.5px solid var(--color-border);
-  border-radius: 0.4rem;
-  background-color: var(--color-success-soft);
-  color: var(--color-success);
-  padding: 1rem;
-  margin: 1rem;
-  margin-top: auto;
-}
-.security-icon {
-  display: flex;
-  gap: 0.4rem;
-}
-.security-icon svg {
-  color: var(--color-success);
-  height: 14px;
-  width: 14px;
-}
-.security-icon h3 {
-  font-weight: 400;
-  font-size: 14px;
-  margin: 0;
-}
-.security-text p {
-  margin: 0;
-  font-size: 10px;
-}
 .logout-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -325,9 +283,6 @@ function confirmLogout() {
     color: inherit;
   }
 
-  .security {
-    display: none;
-  }
 }
 @media (max-width: 1369px) and (orientation: landscape) {
   .side-logo {
@@ -344,15 +299,20 @@ function confirmLogout() {
     height: 40px;
   }
   .side-nav-comp {
-    width: 95%;
-  }
-  .side-nav-comp a {
-    font-size: 20px;
+    width: 100%;
+    min-height: 52px;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+    border-radius: 0.5rem;
+    box-sizing: border-box;
+    font-size: 18px;
   }
 
   .side-nav-comp svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
   }
 
   .side-nav {
@@ -360,26 +320,29 @@ function confirmLogout() {
   }
 
   .log-out {
-    gap: 2.5rem;
+    gap: 0.75rem;
   }
   .log-out-comp {
-    width: 95%;
-  }
-
-  .security-icon h3 {
-    font-size: 20px;
-  }
-
-  .security-text p {
+    width: 100%;
+    min-height: 52px;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+    border-radius: 0.5rem;
+    box-sizing: border-box;
     font-size: 18px;
   }
+
+  .log-out-comp svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
 }
 @media (max-width: 769px) {
   .side-bar-container {
-    height: auto;
-  }
-  .security {
-    display: none;
+    height: 100%;
   }
 }
 
@@ -447,8 +410,5 @@ function confirmLogout() {
     font-size: 1rem;
   }
 
-  .security {
-    display: none;
-  }
 }
 </style>

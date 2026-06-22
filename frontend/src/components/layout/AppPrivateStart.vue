@@ -1,8 +1,9 @@
 <script setup>
-import { ref } from 'vue'
-import { getCurrentUser } from '@/services/userService'
+import { computed } from 'vue'
 
-defineProps({
+import { useCurrentUser } from '@/composables/useCurrentUser'
+
+const props = defineProps({
   title: {
     type: String,
     required: true,
@@ -17,19 +18,16 @@ defineProps({
   },
 })
 
-const currentUser = ref('')
-const errorMessage = ref('')
 const emit = defineEmits(['add-glucose'])
+const { currentUser } = useCurrentUser()
 
-async function loadCurrentUser() {
-  try {
-    currentUser.value = await getCurrentUser()
-  } catch (error) {
-    errorMessage.value = error.message
+const resolvedTitle = computed(() => {
+  if (currentUser.value?.name) {
+    return `${currentUser.value.name}, ${props.title}`
   }
-}
 
-loadCurrentUser()
+  return `${props.title.charAt(0).toUpperCase()}${props.title.slice(1)}`
+})
 </script>
 <template>
   <article class="private-head">
@@ -38,7 +36,7 @@ loadCurrentUser()
         ><h2>{{ main }}</h2></span
       >
       <div class="private-head-sub-message">
-        <h3>{{ currentUser.name }} {{ title }}</h3>
+        <h3>{{ resolvedTitle }}</h3>
       </div>
     </section>
     <button type="button" class="private-right" :class="`${variant}`" @click="emit('add-glucose')">
@@ -61,14 +59,21 @@ loadCurrentUser()
   display: flex;
   flex-direction: column;
   justify-items: flex-start;
-  gap: 0.1rem;
+  gap: 0.4rem;
   margin-right: auto;
 }
 .main-message h2 {
-  font-size: 20px;
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
 .private-head-sub-message h3 {
-  font-size: 16px;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .private-right.active {
@@ -77,7 +82,9 @@ loadCurrentUser()
 
   gap: 1rem;
   margin-left: auto;
-  padding: 0.6rem 1rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  box-sizing: border-box;
 
   border-radius: 0.5rem;
   background-color: var(--color-primary);
@@ -101,6 +108,10 @@ loadCurrentUser()
 .private-right.active:hover {
   background-color: var(--color-primary-dark);
 }
+.private-right.active:focus-visible {
+  outline: 3px solid var(--color-primary-muted);
+  outline-offset: 2px;
+}
 @media (max-width: 1025px) and (orientation: portrait) {
   .private-head {
     display: flex;
@@ -108,11 +119,11 @@ loadCurrentUser()
   }
 
   .main-message h2 {
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 4vw, 1.875rem);
   }
 
   .private-head-sub-message h3 {
-    font-size: 1.25rem;
+    font-size: clamp(0.95rem, 2.2vw, 1.05rem);
   }
 
   .private-right.inactive {
@@ -123,7 +134,7 @@ loadCurrentUser()
     margin-left: 0;
     padding: 0.6rem 1rem;
 
-    border-radius: 0.25rem;
+    border-radius: 0.5rem;
 
     width: 100%;
   }
@@ -142,7 +153,7 @@ loadCurrentUser()
 
   .main-message h2 {
     margin: 0;
-    font-size: 1.35rem;
+    font-size: 1.5rem;
     line-height: 1.1;
   }
 

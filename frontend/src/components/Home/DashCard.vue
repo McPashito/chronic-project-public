@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue'
 
-import InfoIcon from '../Icons/InfoIcon.vue'
 
 const props = defineProps({
   title: {
@@ -121,7 +120,6 @@ const resolvedBadgeVariant = computed(() => {
   <article class="dash-card">
     <header class="dash-card-header">
       <p>{{ title }}</p>
-      <InfoIcon class="dash-card-info-icon" />
     </header>
 
     <section class="dash-card-body">
@@ -184,12 +182,6 @@ const resolvedBadgeVariant = computed(() => {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--color-text);
-}
-.dash-card-info-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--color-text-muted);
-  flex-shrink: 0;
 }
 .dash-card-body {
   display: grid;
@@ -318,10 +310,6 @@ const resolvedBadgeVariant = computed(() => {
     text-align: left;
     font-size: 1.5rem;
   }
-  .dash-card-info-icon {
-    width: 20px;
-    height: 20px;
-  }
   .dash-card-body {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -412,11 +400,6 @@ const resolvedBadgeVariant = computed(() => {
     text-align: center;
     font-size: 0.95rem;
     line-height: 1.2;
-  }
-
-  .dash-card-info-icon {
-    width: 16px;
-    height: 16px;
   }
 
   .dash-card-body {
@@ -513,11 +496,6 @@ const resolvedBadgeVariant = computed(() => {
   .dash-card-header p {
     font-size: 0.85rem;
     line-height: 1.1;
-  }
-
-  .dash-card-info-icon {
-    width: 15px;
-    height: 15px;
   }
 
   .dash-card-body {

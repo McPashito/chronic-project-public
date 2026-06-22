@@ -12,15 +12,17 @@ import MailIcon from '@/components/Icons/MailIcon.vue'
 import MoonIcon from '@/components/Icons/MoonIcon.vue'
 import SecurityIcon from '@/components/Icons/SecurityIcon.vue'
 
-import { getCurrentUser } from '@/services/userService'
+import { useCurrentUser } from '@/composables/useCurrentUser'
 import { changePassword } from '@/services/securityService'
 import { handleAuthError } from '@/utils/handleAuthError'
 
 const router = useRouter()
 
-const currentUser = ref(null)
-const isLoadingSettings = ref(false)
-const settingsError = ref('')
+const {
+  currentUser,
+  isCurrentUserLoading: isLoadingSettings,
+  currentUserError: settingsError,
+} = useCurrentUser()
 
 const isDarkMode = ref(false)
 
@@ -48,27 +50,7 @@ const currentEmail = computed(() => {
 onMounted(() => {
   const savedTheme = localStorage.getItem('chronic_theme')
   isDarkMode.value = savedTheme === 'dark'
-
-  loadSettingsData()
 })
-
-async function loadSettingsData() {
-  isLoadingSettings.value = true
-  settingsError.value = ''
-
-  try {
-    currentUser.value = await getCurrentUser()
-  } catch (error) {
-    if (handleAuthError(error, router)) {
-      settingsError.value = 'Tu sesión ha caducado. Te redirigimos al inicio de sesión.'
-      return
-    }
-
-    settingsError.value = error.message || 'No se pudo cargar la configuración.'
-  } finally {
-    isLoadingSettings.value = false
-  }
-}
 
 function toggleDarkMode() {
   isDarkMode.value = !isDarkMode.value
@@ -142,57 +124,59 @@ async function handleEmailSubmit() {
 
 <template>
   <AppPrivateStart
-    title=", gestiona la seguridad y preferencias principales de tu cuenta"
+    title="gestiona la seguridad y preferencias principales de tu cuenta"
     main="Configuración y cuenta"
     variant="inactive"
   />
 
-  <section class="settings-main-flex">
-    <div v-if="isLoadingSettings" class="settings-state">Cargando configuración...</div>
+  <section class="settings-main-flex" :aria-busy="isLoadingSettings">
+    <section class="settings-card-flex">
+      <div class="settings-card-head">
+        <div class="settings-head-text">
+          <h3>Apariencia</h3>
+          <p>Personaliza cómo se ve la aplicación.</p>
+        </div>
+      </div>
 
-    <div v-else-if="settingsError" class="settings-state settings-state-error">
+      <article class="settings-option-row">
+        <div class="settings-option-info">
+          <div class="settings-option-icon">
+            <MoonIcon />
+          </div>
+
+          <div class="settings-option-text">
+            <strong>Modo oscuro</strong>
+            <span>Activa el modo oscuro para reducir la fatiga visual.</span>
+          </div>
+        </div>
+
+        <div class="settings-switch-wrap">
+          <button
+            type="button"
+            class="settings-switch"
+            :class="{ 'is-active': isDarkMode }"
+            role="switch"
+            :aria-checked="isDarkMode"
+            :aria-label="isDarkMode ? 'Desactivar modo oscuro' : 'Activar modo oscuro'"
+            @click="toggleDarkMode"
+          >
+            <span></span>
+          </button>
+
+          <strong>{{ isDarkMode ? 'Activado' : 'Desactivado' }}</strong>
+        </div>
+      </article>
+    </section>
+
+    <div v-if="isLoadingSettings" class="settings-state" role="status" aria-live="polite">
+      Cargando datos de la cuenta...
+    </div>
+
+    <div v-else-if="settingsError" class="settings-state settings-state-error" role="alert">
       {{ settingsError }}
     </div>
 
     <template v-else>
-      <section class="settings-card-flex">
-        <div class="settings-card-head">
-          <div class="settings-head-text">
-            <h3>Apariencia</h3>
-            <p>Personaliza cómo se ve la aplicación.</p>
-          </div>
-        </div>
-
-        <article class="settings-option-row">
-          <div class="settings-option-info">
-            <div class="settings-option-icon">
-              <MoonIcon />
-            </div>
-
-            <div class="settings-option-text">
-              <strong>Modo oscuro</strong>
-              <span>Activa el modo oscuro para reducir la fatiga visual.</span>
-            </div>
-          </div>
-
-          <div class="settings-switch-wrap">
-            <button
-              type="button"
-              class="settings-switch"
-              :class="{ 'is-active': isDarkMode }"
-              role="switch"
-              :aria-checked="isDarkMode"
-              :aria-label="isDarkMode ? 'Desactivar modo oscuro' : 'Activar modo oscuro'"
-              @click="toggleDarkMode"
-            >
-              <span></span>
-            </button>
-
-            <strong>{{ isDarkMode ? 'Activado' : 'Desactivado' }}</strong>
-          </div>
-        </article>
-      </section>
-
       <section class="settings-card-flex">
         <div class="settings-card-head">
           <div class="settings-head-icon">

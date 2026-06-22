@@ -1,10 +1,8 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-
 import OpenMenuIcon from '../Icons/OpenMenuIcon.vue'
 import CloseMenuIcon from '../Icons/CloseMenuIcon.vue'
 import LogoIcon from '../brand/LogoIcon.vue'
-import { getCurrentUser } from '@/services/userService'
+import { useCurrentUser } from '@/composables/useCurrentUser'
 
 const emit = defineEmits(['toggle-sidebar'])
 
@@ -15,20 +13,7 @@ defineProps({
   },
 })
 
-const currentUser = ref(null)
-const errorMessage = ref('')
-
-async function loadCurrentUser() {
-  try {
-    currentUser.value = await getCurrentUser()
-  } catch (error) {
-    errorMessage.value = error.message
-  }
-}
-
-onMounted(() => {
-  loadCurrentUser()
-})
+const { currentUser } = useCurrentUser()
 </script>
 
 <template>

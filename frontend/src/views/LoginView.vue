@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { API_BASE_URL } from '@/config/api'
 import { useRouter } from 'vue-router'
 
-import { getCurrentUser } from '@/services/userService'
+import { useCurrentUser } from '@/composables/useCurrentUser'
 
 import MailIcon from '@/components/Icons/MailIcon.vue'
 import LockerIcon from '@/components/Icons/LockerIcon.vue'
@@ -15,42 +15,54 @@ const router = useRouter()
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
-const currentUser = ref(null)
+const isLoading = ref(false)
+const { currentUser, loadCurrentUser, clearCurrentUser } = useCurrentUser()
 
 const errorMessage = ref('')
 
 async function handleLogin() {
+  if (isLoading.value) return
+
   errorMessage.value = ''
-  currentUser.value = null
+  clearCurrentUser()
+  isLoading.value = true
 
-  const formData = new URLSearchParams()
-  formData.append('username', email.value)
-  formData.append('password', password.value)
-
-  const respuesta = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: formData,
-  })
-
-  const data = await respuesta.json()
-
-  if (!respuesta.ok) {
-    errorMessage.value = data.detail || 'No se ha podido iniciar sesión'
-    return
-  }
-
-  localStorage.setItem('access_token', data.access_token)
   try {
-    currentUser.value = await getCurrentUser()
+    const formData = new URLSearchParams()
+    formData.append('username', email.value)
+    formData.append('password', password.value)
 
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 2000)
+    const respuesta = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData,
+    })
+
+    const data = await respuesta.json()
+
+    if (!respuesta.ok) {
+      errorMessage.value = data.detail || 'No se ha podido iniciar sesión'
+      return
+    }
+
+    localStorage.setItem('access_token', data.access_token)
+    try {
+      await loadCurrentUser({ force: true })
+
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 2000)
+    } catch (error) {
+      localStorage.removeItem('access_token')
+      clearCurrentUser()
+      errorMessage.value = error.message
+    }
   } catch (error) {
-    errorMessage.value = error.message
+    errorMessage.value = error.message || 'No se ha podido conectar con el servidor'
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
@@ -60,13 +72,14 @@ async function handleLogin() {
       <div v-if="!currentUser" class="login-grid-content">
         <h1>Iniciar Sesión</h1>
         <h2>Accede a tu cuenta para continuar</h2>
-        <form @submit.prevent="handleLogin">
+        <form @submit.prevent="handleLogin" :aria-busy="isLoading">
           <label class="label" for="email">Correo electrónico</label>
           <div class="placing">
             <MailIcon class="placing-icon" /><input
               v-model="email"
               id="email"
               type="email"
+              :disabled="isLoading"
               placeholder="tu@email.com"
             />
           </div>
@@ -76,12 +89,14 @@ async function handleLogin() {
               v-model="password"
               id="password"
               :type="showPassword ? 'text' : 'password'"
+              :disabled="isLoading"
               placeholder="Tu contraseña"
             />
             <button
               class="password-toggle"
               type="button"
               :aria-label="showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'"
+              :disabled="isLoading"
               @click="showPassword = !showPassword"
             >
               <EyeUpIcon v-if="showPassword" />
@@ -93,7 +108,10 @@ async function handleLogin() {
             <p>{{ errorMessage }}</p>
           </div>
           <p class="forgot"></p>
-          <button class="login-button" type="submit">Iniciar sesión</button>
+          <button class="login-button" type="submit" :disabled="isLoading">
+            <span v-if="isLoading" class="login-spinner" aria-hidden="true"></span>
+            <span>{{ isLoading ? 'Iniciando sesión...' : 'Iniciar sesión' }}</span>
+          </button>
         </form>
 
         <div class="hook-user">
@@ -208,6 +226,10 @@ async function handleLogin() {
   text-align: center;
 }
 .login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   text-align: center;
   border: none;
   border-style: none;
@@ -216,6 +238,28 @@ async function handleLogin() {
   color: var(--color-bg);
   padding: 0.8rem;
   cursor: pointer;
+}
+.login-grid-content form[aria-busy='true'] .login-button,
+.login-grid-content form[aria-busy='true'] .password-toggle {
+  opacity: 0.7;
+  pointer-events: none;
+}
+.login-grid-content form[aria-busy='true'] input {
+  opacity: 0.75;
+  cursor: wait;
+}
+.login-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: var(--color-bg);
+  border-radius: 50%;
+  animation: login-spin 0.8s linear infinite;
+}
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .hook-user {
   display: flex;

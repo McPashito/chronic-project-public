@@ -26,9 +26,12 @@ startDate.setDate(startDate.getDate() - 8)
 const startDateFormated = startDate.toISOString().split('T')[0]
 
 const currentSummary = ref(null)
-const errorMessage = ref('')
+const isLoadingSummary = ref(true)
+const summaryError = ref('')
 
 const glucoseRecords = ref([])
+const isLoadingRecentRecords = ref(true)
+const recentRecordsError = ref('')
 
 const isRecordModalOpen = ref(false)
 const recordModalMode = ref('create')
@@ -37,30 +40,40 @@ const recordFormError = ref('')
 const isSubmittingRecord = ref(false)
 
 async function loadSummary() {
+  isLoadingSummary.value = true
+  summaryError.value = ''
+
   try {
     currentSummary.value = await getSummary(startDateFormated, endDateFormated)
   } catch (error) {
     if (handleAuthError(error, router)) {
-      errorMessage.value = 'Tu sesión ha caducado. Te redirigimos al inicio de sesión.'
+      summaryError.value = 'Tu sesión ha caducado. Te redirigimos al inicio de sesión.'
       return
     }
 
-    errorMessage.value = error.message
+    summaryError.value = error.message || 'No se pudo cargar el resumen.'
+  } finally {
+    isLoadingSummary.value = false
   }
 }
 
 async function loadGlucoseRecords() {
+  isLoadingRecentRecords.value = true
+  recentRecordsError.value = ''
+
   try {
     const recordsData = await getGlucoseRecords(startDateFormated, endDateFormated)
 
     glucoseRecords.value = recordsData
   } catch (error) {
     if (handleAuthError(error, router)) {
-      errorMessage.value = 'Tu sesión ha caducado. Te redirigimos al inicio de sesión.'
+      recentRecordsError.value = 'Tu sesión ha caducado. Te redirigimos al inicio de sesión.'
       return
     }
 
-    errorMessage.value = error.message
+    recentRecordsError.value = error.message || 'No se pudieron cargar los registros recientes.'
+  } finally {
+    isLoadingRecentRecords.value = false
   }
 }
 
@@ -124,15 +137,27 @@ function formatGlucoseDateTime(date, time) {
   <section class="dash">
     <section class="dash-flex">
       <AppPrivateStart
-        title=", aquí tienes el resumen de tus últimos 7 días"
+        title="aquí tienes el resumen de tus últimos 7 días"
         main="Bienvenido!"
         variant="active"
         @add-glucose="openCreateRecordModal"
       />
 
-      <div class="dash-card-grid">
+      <div class="dash-card-grid" :aria-busy="isLoadingSummary">
+        <div v-if="isLoadingSummary" class="dash-state" role="status" aria-live="polite">
+          Cargando resumen...
+        </div>
+
+        <div v-else-if="summaryError" class="dash-state dash-state-error" role="alert">
+          {{ summaryError }}
+        </div>
+
+        <div v-else-if="currentSummary?.total_records === 0" class="dash-state" role="status">
+          No hay glucemias en los últimos 7 días.
+        </div>
+
         <DashCard
-          v-if="currentSummary && currentSummary.last_glucemia"
+          v-if="!isLoadingSummary && !summaryError && currentSummary?.last_glucemia"
           title="Tu última glucemia"
           :icon="DropIcon"
           :value="currentSummary.last_glucemia.glucose_value"
@@ -148,7 +173,7 @@ function formatGlucoseDateTime(date, time) {
         />
 
         <DashCard
-          v-if="currentSummary && currentSummary.min_glucemia"
+          v-if="!isLoadingSummary && !summaryError && currentSummary?.min_glucemia"
           title="Glucemia mínima"
           :icon="EyeDownIcon"
           :value="currentSummary.min_glucemia.glucose_value"
@@ -164,7 +189,7 @@ function formatGlucoseDateTime(date, time) {
         />
 
         <DashCard
-          v-if="currentSummary && currentSummary.max_glucemia"
+          v-if="!isLoadingSummary && !summaryError && currentSummary?.max_glucemia"
           title="Glucemia máxima"
           :icon="EyeUpIcon"
           :value="currentSummary.max_glucemia.glucose_value"
@@ -180,7 +205,12 @@ function formatGlucoseDateTime(date, time) {
         />
 
         <DashCard
-          v-if="currentSummary && currentSummary.average_glucemia !== null"
+          v-if="
+            !isLoadingSummary &&
+            !summaryError &&
+            currentSummary &&
+            currentSummary.average_glucemia !== null
+          "
           title="Glucemia media"
           :icon="AverageIcon"
           variant="blue"
@@ -189,7 +219,7 @@ function formatGlucoseDateTime(date, time) {
           meta="Media últimos 7 días"
         />
       </div>
-      <section class="dash-records-panel">
+      <section class="dash-records-panel" :aria-busy="isLoadingRecentRecords">
         <div class="dash-records-header">
           <div>
             <span class="dash-records-kicker">Últimos registros</span>
@@ -199,8 +229,25 @@ function formatGlucoseDateTime(date, time) {
           <RouterLink to="/glucemias" class="dash-records-link"> Panel de glucemias </RouterLink>
         </div>
 
-        <div v-if="errorMessage" class="dash-records-table">
-          {{ errorMessage }}
+        <div
+          v-if="isLoadingRecentRecords"
+          class="dash-records-table dash-state"
+          role="status"
+          aria-live="polite"
+        >
+          Cargando registros recientes...
+        </div>
+
+        <div
+          v-else-if="recentRecordsError"
+          class="dash-records-table dash-state dash-state-error"
+          role="alert"
+        >
+          {{ recentRecordsError }}
+        </div>
+
+        <div v-else-if="glucoseRecords.length === 0" class="dash-records-table dash-state">
+          No hay registros recientes.
         </div>
 
         <div v-else class="dash-records-table">
@@ -225,6 +272,15 @@ function formatGlucoseDateTime(date, time) {
   grid-template-columns: 1fr 1fr 1fr 1fr;
   justify-content: flex-start;
   gap: 1rem;
+}
+.dash-state {
+  grid-column: 1 / -1;
+  padding: 2rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.dash-state-error {
+  color: var(--color-danger);
 }
 .dash-card-header {
   display: flex;
@@ -273,9 +329,11 @@ function formatGlucoseDateTime(date, time) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.5rem;
+  min-height: 44px;
   padding: 0 1rem;
-  border-radius: 999px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-primary);
+  border-radius: 0.5rem;
   background-color: var(--color-primary);
   color: var(--color-bg);
   font-size: 0.95rem;
@@ -287,6 +345,10 @@ function formatGlucoseDateTime(date, time) {
 .dash-records-link:hover {
   background-color: var(--color-bg);
   color: var(--color-primary);
+}
+.dash-records-link:focus-visible {
+  outline: 3px solid var(--color-primary-muted);
+  outline-offset: 2px;
 }
 @media (max-width: 1025px) and (orientation: portrait) {
   .dash-card-grid {
