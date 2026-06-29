@@ -22,7 +22,7 @@ LOGIN_BLOCKED_UNTIL = {}
 
 
 def is_public_registration_allowed():
-    return os.getenv("ALLOW_PUBLIC_REGISTRATION", "true").lower() == "true"
+    return os.getenv("ALLOW_PUBLIC_REGISTRATION", "false").lower() == "true"
 
 
 def check_login_rate_limit(client_ip: str):
