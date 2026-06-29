@@ -25,6 +25,7 @@ Render backend:
 ```env
 DATABASE_URL=
 SECRET_KEY=
+ALLOW_PUBLIC_REGISTRATION=false
 ```
 
 Vercel frontend:
@@ -34,6 +35,8 @@ VITE_API_BASE_URL=
 ```
 
 Do not commit `.env`, `.env.public`, database URLs, passwords, JWT secrets or production tokens.
+
+`ALLOW_PUBLIC_REGISTRATION=false` is recommended for the public portfolio demo so visitors cannot create real accounts through Swagger or direct API calls. Local development can keep the default value enabled.
 
 ## Backend Deployment
 
@@ -70,6 +73,8 @@ python scripts/seed_demo_data.py
 ```
 
 The seed scripts create demo users and artificial glucose records for presentation and testing.
+
+The public demo is intended to be tested with seeded demo accounts only. Do not enter real personal or health-related data.
 
 ## Demo Data Refresh
 

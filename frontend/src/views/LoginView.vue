@@ -4,6 +4,7 @@ import { API_BASE_URL } from '@/config/api'
 import { useRouter } from 'vue-router'
 
 import { useCurrentUser } from '@/composables/useCurrentUser'
+import { formatApiError } from '@/utils/apiErrors'
 
 import MailIcon from '@/components/Icons/MailIcon.vue'
 import LockerIcon from '@/components/Icons/LockerIcon.vue'
@@ -43,7 +44,7 @@ async function handleLogin() {
     const data = await respuesta.json()
 
     if (!respuesta.ok) {
-      errorMessage.value = data.detail || 'No se ha podido iniciar sesión'
+      errorMessage.value = formatApiError(data, 'No se ha podido iniciar sesión')
       return
     }
 

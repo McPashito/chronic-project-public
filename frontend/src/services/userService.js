@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/config/api'
+import { createApiError } from '@/utils/apiErrors'
 
 export async function getCurrentUser() {
   const token = localStorage.getItem('access_token')
@@ -13,9 +14,7 @@ export async function getCurrentUser() {
   const data = await respuesta.json()
 
   if (!respuesta.ok) {
-    const error = new Error(data.detail || 'No se ha podido obtener el usuario')
-    error.status = respuesta.status
-    throw error
+    throw createApiError(data, 'No se ha podido obtener el usuario', respuesta.status)
   }
 
   return data
@@ -35,9 +34,7 @@ export async function updateCurrentUser(userData) {
   const data = await respuesta.json()
 
   if (!respuesta.ok) {
-    const error = new Error(data.detail || 'No se ha podido editar el perfil')
-    error.status = respuesta.status
-    throw error
+    throw createApiError(data, 'No se ha podido editar el perfil', respuesta.status)
   }
 
   return data

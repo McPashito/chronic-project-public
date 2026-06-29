@@ -1,4 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
+from collections import defaultdict
+import os
+from time import monotonic
+
+from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -10,9 +14,57 @@ from app.core.security import create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+LOGIN_RATE_LIMIT = 10
+LOGIN_RATE_WINDOW_SECONDS = 60
+LOGIN_BLOCK_SECONDS = 60
+LOGIN_ATTEMPTS = defaultdict(list)
+LOGIN_BLOCKED_UNTIL = {}
+
+
+def is_public_registration_allowed():
+    return os.getenv("ALLOW_PUBLIC_REGISTRATION", "true").lower() == "true"
+
+
+def check_login_rate_limit(client_ip: str):
+    now = monotonic()
+
+    blocked_until = LOGIN_BLOCKED_UNTIL.get(client_ip)
+    if blocked_until is not None:
+        if blocked_until > now:
+            raise HTTPException(
+                status_code=429,
+                detail="Demasiados intentos de login. Intentalo de nuevo en un minuto",
+            )
+        del LOGIN_BLOCKED_UNTIL[client_ip]
+
+    window_start = now - LOGIN_RATE_WINDOW_SECONDS
+
+    recent_attempts = [
+        attempt_time
+        for attempt_time in LOGIN_ATTEMPTS[client_ip]
+        if attempt_time >= window_start
+    ]
+
+    if len(recent_attempts) >= LOGIN_RATE_LIMIT:
+        LOGIN_ATTEMPTS[client_ip] = []
+        LOGIN_BLOCKED_UNTIL[client_ip] = now + LOGIN_BLOCK_SECONDS
+        raise HTTPException(
+            status_code=429,
+            detail="Demasiados intentos de login. Intentalo de nuevo en un minuto",
+        )
+
+    recent_attempts.append(now)
+    LOGIN_ATTEMPTS[client_ip] = recent_attempts
+
 
 @router.post("/register", response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
+
+    if not is_public_registration_allowed():
+        raise HTTPException(
+            status_code=403,
+            detail="El registro publico esta deshabilitado en esta demo",
+        )
 
     existing_user = db.query(User).filter(User.email == user.email).first()
 
@@ -37,9 +89,13 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=TokenResponse)
 def login_user(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
+    client_ip = request.client.host if request.client else "unknown"
+    check_login_rate_limit(client_ip)
+
     existing_user = db.query(User).filter(User.email == form_data.username).first()
 
     if existing_user is None:

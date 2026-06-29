@@ -1,12 +1,12 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=8, max_length=72)
     name: str
     surname: str
     date_of_birth: date
@@ -44,4 +44,4 @@ class UserEdit(BaseModel):
 
 class ChangePassword(BaseModel):
     old_password: str
-    new_password: str
+    new_password: str = Field(min_length=8, max_length=72)

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/config/api'
+import { createApiError } from '@/utils/apiErrors'
 
 export async function getSummary(startDate, endDate) {
   const token = localStorage.getItem('access_token')
@@ -16,7 +17,7 @@ export async function getSummary(startDate, endDate) {
   const data = await respuesta.json()
 
   if (!respuesta.ok) {
-    throw new Error(data.detail || 'No se ha podido obtener el resumen de glucemias')
+    throw createApiError(data, 'No se ha podido obtener el resumen de glucemias', respuesta.status)
   }
 
   return data
@@ -41,9 +42,7 @@ export async function getGlucoseRecords(startDate, endDate, momentOfDay) {
   const data = await respuesta.json()
 
   if (!respuesta.ok) {
-    const error = new Error(data.detail || 'No se han podido obtener las glucemias')
-    error.status = respuesta.status
-    throw error
+    throw createApiError(data, 'No se han podido obtener las glucemias', respuesta.status)
   }
 
   return data
@@ -62,9 +61,7 @@ export async function deleteGlucoseRecord(recordId) {
   const data = await respuesta.json()
 
   if (!respuesta.ok) {
-    const error = new Error(data.detail || 'No se ha podido borrar la glucemia')
-    error.status = respuesta.status
-    throw error
+    throw createApiError(data, 'No se ha podido borrar la glucemia', respuesta.status)
   }
 
   return data
@@ -85,9 +82,7 @@ export async function updateGlucoseRecord(recordId, recordData) {
   const data = await respuesta.json()
 
   if (!respuesta.ok) {
-    const error = new Error(data.detail || 'No se ha podido editar la glucemia')
-    error.status = respuesta.status
-    throw error
+    throw createApiError(data, 'No se ha podido editar la glucemia', respuesta.status)
   }
 
   return data
@@ -108,9 +103,7 @@ export async function createGlucoseRecord(recordData) {
   const data = await respuesta.json()
 
   if (!respuesta.ok) {
-    const error = new Error(data.detail || 'No se ha podido crear la glucemia')
-    error.status = respuesta.status
-    throw error
+    throw createApiError(data, 'No se ha podido crear la glucemia', respuesta.status)
   }
 
   return data

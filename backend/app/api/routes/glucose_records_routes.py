@@ -67,7 +67,7 @@ def read_summary(
     if end_date is not None:
         query = query.filter(GlucoseRecord.date <= end_date)
 
-    glucemias = query.order_by(GlucoseRecord.created_at).all()
+    glucemias = query.order_by(GlucoseRecord.date, GlucoseRecord.time).all()
 
     if not glucemias:
         glucose_summary = GlucoseSummaryResponse(
@@ -189,36 +189,6 @@ def edit_glucose_record(
 
     return glucose_record
 
-
-##################################
-
-
-@router.get("/", response_model=list[GlucoseRecordResponse])
-def read_glucose_records(
-    moment_of_day: (
-        Literal["fasting", "before_meal", "after_meal", "night", "other"] | None
-    ) = None,
-    start_date: date | None = None,
-    end_date: date | None = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-
-    query = db.query(GlucoseRecord).filter(GlucoseRecord.user_id == current_user.id)
-
-    if current_user.subscription_type == "standard":
-        oldest_allowed_date = date.today() - timedelta(days=30)
-        query = query.filter(GlucoseRecord.date >= oldest_allowed_date)
-    if moment_of_day:
-        query = query.filter(GlucoseRecord.moment_of_day == moment_of_day)
-    if start_date is not None:
-        query = query.filter(GlucoseRecord.date >= start_date)
-    if end_date is not None:
-        query = query.filter(GlucoseRecord.date <= end_date)
-    return query.order_by(GlucoseRecord.date, GlucoseRecord.time).all()
-
-
-##################################
 
 
 @router.get("/", response_model=list[GlucoseRecordResponse])

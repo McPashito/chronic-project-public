@@ -269,8 +269,7 @@ async function handleEmailSubmit() {
           <div class="settings-info-box">
             <InfoIcon />
             <span>
-              La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas,
-              números y símbolos.
+              La contraseña debe tener entre 8 y 72 caracteres.
             </span>
           </div>
 

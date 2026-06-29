@@ -20,8 +20,11 @@ El desarrollo se planteó de forma incremental: primero una versión simple func
 
 ## Funcionalidades Principales
 
-- Registro e inicio de sesión con JWT.
+- Endpoint backend de registro e inicio de sesión con JWT.
+- Auto-registro público desactivable mediante variable de entorno.
 - Contraseñas hasheadas con Passlib/bcrypt.
+- Validación de contraseñas entre 8 y 72 caracteres.
+- Rate limiting en login tras intentos fallidos repetidos.
 - Rutas privadas protegidas.
 - CRUD de registros de glucemia.
 - Registros asociados al usuario autenticado.
@@ -33,34 +36,9 @@ El desarrollo se planteó de forma incremental: primero una versión simple func
 - Perfil de usuario y cambio de contraseña.
 - Modo oscuro en la zona privada.
 - Diseño responsive para escritorio, tablet y móvil.
+- Normalización de errores de validación API/Pydantic en mensajes legibles en frontend.
+- Suite de tests backend para autenticación, usuarios, glucemias y reglas de propiedad.
 - Scripts de datos demo para pruebas locales y despliegue de portfolio.
-
-## Capturas
-
-### Inicio Público Y Dashboard Privado
-
-<p>
-  <img src="docs/screenshots/home.png" alt="Página de inicio pública de Chronic Project" width="49%">
-  <img src="docs/screenshots/dashboard.png" alt="Dashboard privado con tarjetas de resumen de glucemias" width="49%">
-</p>
-
-### Glucemias Y Formulario
-
-<p>
-  <img src="docs/screenshots/glucose-records.png" alt="Tabla de glucemias y resumen del periodo seleccionado" width="49%">
-  <img src="docs/screenshots/glucose-form.png" alt="Formulario modal para crear una glucemia" width="49%">
-</p>
-
-### Perfil Y Modo Oscuro
-
-<p>
-  <img src="docs/screenshots/profile.png" alt="Vista de perfil de usuario con resumen de salud" width="49%">
-  <img src="docs/screenshots/dark-mode.png" alt="Dashboard en modo oscuro" width="49%">
-</p>
-
-### Diseño Responsive
-
-![Vistas responsive en tablet y móvil](docs/screenshots/responsive-showcase.png)
 
 ## Stack Tecnológico
 
@@ -230,7 +208,12 @@ Ver `backend/.env.example`.
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/chronic_project_db
 SECRET_KEY=change-this-secret-key
+ALLOW_PUBLIC_REGISTRATION=true
 ```
+
+`ALLOW_PUBLIC_REGISTRATION` puede configurarse como `false` en una demo pública
+para bloquear `POST /auth/register`, manteniendo el flujo de registro disponible
+en local y en tests.
 
 ### Frontend
 
@@ -245,6 +228,8 @@ Los archivos `.env` reales están ignorados por Git y no deben subirse al reposi
 ## Datos Demo
 
 El proyecto incluye scripts de datos demo para facilitar pruebas locales y despliegues de portfolio.
+
+El auto-registro público está deshabilitado intencionadamente en la demo desplegada porque la aplicación trabaja con datos de salud. Esto evita recoger datos personales o médicos reales de visitantes. El backend conserva el endpoint de registro como parte del flujo de autenticación, y se puede probar en local con una base de datos y variables de entorno propias. En producción, el backend desplegado debe usar `ALLOW_PUBLIC_REGISTRATION=false`.
 
 Desde la carpeta `backend`, después de aplicar migraciones:
 
@@ -300,6 +285,12 @@ Arrancar la API:
 
 ```bash
 uvicorn app.main:app --reload
+```
+
+Ejecutar tests backend:
+
+```bash
+pytest
 ```
 
 ## Comandos Útiles Del Frontend
@@ -376,6 +367,16 @@ La aplicación incluye una lógica sencilla de tipos de cuenta:
 
 No hay pagos reales. Es una funcionalidad de portfolio para demostrar reglas de negocio y autorización.
 
+### Política De Registro En Demo
+
+El backend incluye un endpoint real de registro y lo mantiene activo por defecto para desarrollo local y tests automatizados.
+
+En el despliegue público de portfolio, el registro se desactiva con `ALLOW_PUBLIC_REGISTRATION=false`. Así se evita que visitantes creen cuentas o introduzcan datos reales de salud desde Swagger o llamadas directas a la API. El acceso demo se realiza mediante cuentas preparadas con datos artificiales.
+
+### Validación Y Mensajes De Error
+
+El backend valida contraseñas, valores de glucemia, fechas y payloads con Pydantic. El frontend normaliza los errores de validación de la API para mostrar mensajes legibles en lugar de objetos técnicos.
+
 ### Simplicidad Visual
 
 La interfaz prioriza tarjetas legibles, tablas filtrables y formularios claros en lugar de gráficas complejas. Esta decisión busca mejorar la lectura inmediata y la accesibilidad para un público amplio.
@@ -426,11 +427,14 @@ Más detalles: [Guía de despliegue](docs/deployment.md).
 - No hay sistema real de pagos.
 - No hay recuperación de contraseña por email.
 - Las gráficas y exportaciones CSV/PDF quedan como mejoras futuras.
+- No hay tests automáticos de frontend todavía; el frontend se verifica con build de producción y pruebas manuales.
 - Los datos demo son artificiales y solo sirven para pruebas y presentación.
+- El auto-registro público está deshabilitado en la demo desplegada para evitar recoger datos reales de salud.
 
 ## Mejoras Futuras
 
-- Tests automatizados para reglas principales del backend.
+- GitHub Actions para tests backend y build frontend.
+- Tests unitarios frontend para formateo de errores de API y formularios principales.
 - Recuperación de contraseña.
 - Gráficas de evolución glucémica.
 - Exportación CSV/PDF.

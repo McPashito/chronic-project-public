@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/config/api'
+import { createApiError } from '@/utils/apiErrors'
 
 export async function changePassword(passwordData) {
   const token = localStorage.getItem('access_token')
@@ -15,9 +16,7 @@ export async function changePassword(passwordData) {
   const data = await respuesta.json()
 
   if (!respuesta.ok) {
-    const error = new Error(data.detail || 'No se ha podido cambiar la contraseña')
-    error.status = respuesta.status
-    throw error
+    throw createApiError(data, 'No se ha podido cambiar la contraseña', respuesta.status)
   }
 
   return data

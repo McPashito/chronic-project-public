@@ -20,8 +20,11 @@ The development followed an incremental approach: first a simple working version
 
 ## Main Features
 
-- User registration and login with JWT.
+- Backend user registration endpoint and login with JWT.
+- Public demo self-registration can be disabled by environment variable.
 - Password hashing with Passlib/bcrypt.
+- Password length validation from 8 to 72 characters.
+- Login rate limiting for repeated failed attempts.
 - Protected private routes.
 - Glucose record CRUD.
 - User-owned records: each user can only access their own glucose records.
@@ -33,34 +36,9 @@ The development followed an incremental approach: first a simple working version
 - User profile and password change.
 - Dark mode in the private area.
 - Responsive frontend for desktop, tablet and mobile.
+- API/Pydantic validation errors normalized into readable frontend messages.
+- Backend test suite for authentication, users, glucose records and ownership rules.
 - Demo data scripts for local testing and portfolio deployment.
-
-## Screenshots
-
-### Public Home And Private Dashboard
-
-<p>
-  <img src="docs/screenshots/home.png" alt="Chronic Project public home page" width="49%">
-  <img src="docs/screenshots/dashboard.png" alt="Private dashboard with glucose summary cards" width="49%">
-</p>
-
-### Glucose Records And Form
-
-<p>
-  <img src="docs/screenshots/glucose-records.png" alt="Glucose records table and selected period summary" width="49%">
-  <img src="docs/screenshots/glucose-form.png" alt="Modal form for creating a glucose record" width="49%">
-</p>
-
-### Profile And Dark Mode
-
-<p>
-  <img src="docs/screenshots/profile.png" alt="User profile view with health summary" width="49%">
-  <img src="docs/screenshots/dark-mode.png" alt="Dark mode dashboard" width="49%">
-</p>
-
-### Responsive Layouts
-
-![Responsive tablet and mobile views](docs/screenshots/responsive-showcase.png)
 
 ## Tech Stack
 
@@ -230,7 +208,12 @@ See `backend/.env.example`.
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/chronic_project_db
 SECRET_KEY=change-this-secret-key
+ALLOW_PUBLIC_REGISTRATION=true
 ```
+
+`ALLOW_PUBLIC_REGISTRATION` can be set to `false` in a public demo deployment to
+block `POST /auth/register` while keeping local development and tests able to use
+the registration flow.
 
 ### Frontend
 
@@ -245,6 +228,12 @@ Real `.env` files are intentionally ignored by Git and must not be committed.
 ## Demo Data
 
 The project includes demo seed scripts to make local testing and portfolio deployment easier.
+
+Public self-registration is intentionally disabled in the deployed portfolio demo because the
+application deals with health-related data. This avoids collecting real personal or medical data
+from visitors. The backend still includes the registration endpoint as part of the authentication
+flow, and developers can test it locally with their own database and environment variables.
+In production, the deployed backend should set `ALLOW_PUBLIC_REGISTRATION=false`.
 
 From the `backend` folder, after running migrations:
 
@@ -300,6 +289,12 @@ Run the API:
 
 ```bash
 uvicorn app.main:app --reload
+```
+
+Run backend tests:
+
+```bash
+pytest
 ```
 
 ## Useful Frontend Commands
@@ -376,6 +371,16 @@ The application includes simple account-type logic:
 
 There are no real payments. This is a portfolio feature to demonstrate business rules and authorization logic.
 
+### Demo Registration Policy
+
+The backend includes a real registration endpoint and keeps it enabled by default for local development and automated tests.
+
+For the public portfolio deployment, registration is disabled with `ALLOW_PUBLIC_REGISTRATION=false`. This prevents visitors from creating accounts or entering real health-related data through Swagger or direct API calls. Demo access is provided through seeded accounts with artificial data.
+
+### Validation And Error Messages
+
+The backend validates passwords, glucose values, dates and request payloads with Pydantic. The frontend normalizes API validation errors so users see readable messages instead of raw objects.
+
 ### Visual Simplicity
 
 The UI intentionally prioritizes readable cards, filtered tables and clear forms instead of complex charts. This keeps the interface accessible and easier to use for a broad audience.
@@ -426,11 +431,14 @@ More details: [Deployment Guide](docs/deployment.md).
 - No real payment system is implemented.
 - Password recovery by email is not implemented.
 - Charts and CSV/PDF exports are future improvements.
+- Frontend automated tests are not included yet; the frontend is verified with production builds and manual checks.
 - Demo data is artificial and only intended for testing and presentation.
+- Public self-registration is disabled in the deployed demo to avoid collecting real health-related data.
 
 ## Future Improvements
 
-- Automated tests for core backend rules.
+- GitHub Actions for backend tests and frontend build checks.
+- Frontend unit tests for API error formatting and key form behavior.
 - Password recovery flow.
 - Chart-based glucose trends.
 - CSV/PDF export.

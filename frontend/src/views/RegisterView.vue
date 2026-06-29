@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue'
-import { API_BASE_URL } from '@/config/api'
 
 import MailIcon from '@/components/Icons/MailIcon.vue'
 import LockerIcon from '@/components/Icons/LockerIcon.vue'
@@ -11,45 +10,9 @@ import ScheduleIcon from '@/components/Icons/ScheduleIcon.vue'
 
 import AtentionIcon from '@/components/Icons/AtentionIcon.vue'
 
-const email = ref('')
-const password = ref('')
-const passwordConfirm = ref('')
 const showPassword = ref(false)
 const showPasswordConfirm = ref(false)
-const fecha = ref('')
-const name = ref('')
-const apellidos = ref('')
 
-const successMessage = ref('')
-const errorMessage = ref('')
-const currentUser = ref(null)
-
-const acceptedTerms = ref(false)
-const wantsPremium = ref(false)
-
-async function handleRegister() {
-  if (!acceptedTerms.value) {
-    errorMessage.value = 'Debes aceptar los términos y condiciones para registrarte'
-    successMessage.value = ''
-    currentUser.value = null
-    return
-  }
-
-  if (password.value !== passwordConfirm.value) {
-    errorMessage.value = 'Las contraseñas no coinciden'
-    successMessage.value = ''
-    currentUser.value = null
-    return
-  }
-
-  const newUser = {
-    email: email.value,
-    password: password.value,
-    name: name.value,
-    surname: apellidos.value,
-    date_of_birth: fecha.value,
-  }
-}
 </script>
 
 <template>
@@ -58,40 +21,50 @@ async function handleRegister() {
       <div class="register-grid-content">
         <h1>Crea tu cuenta</h1>
         <h2>Crea tu cuenta para acceder a los servicios</h2>
-        <form v-if="!currentUser" @submit.prevent="handleRegister">
+
+        <div class="register-demo-notice" role="note">
+          <strong>Registro deshabilitado en la demo pública</strong>
+          <p>
+            Chronic Project trabaja con datos de salud. Para evitar que se introduzcan datos
+            médicos reales en una demo de portfolio, el registro público está desactivado.
+          </p>
+          <p>Puedes probar la aplicación con las cuentas demo preparadas.</p>
+        </div>
+
+        <form class="register-preview" aria-disabled="true">
           <label class="label" for="name">Nombre</label>
           <div class="placing">
             <PeopleIcon class="placing-icon" /><input
-              v-model="name"
               id="name"
               type="text"
+              disabled
               placeholder="Tu nombre"
             />
           </div>
           <label class="label" for="apellidos">Apellidos</label>
           <div class="placing">
             <PeopleIcon class="placing-icon" /><input
-              v-model="apellidos"
               id="apellidos"
               type="text"
+              disabled
               placeholder="Tus apellidos"
             />
           </div>
           <label class="label" for="fecha">Fecha de nacimiento</label>
           <div class="placing">
             <ScheduleIcon class="placing-icon" /><input
-              v-model="fecha"
               id="fecha"
               type="date"
+              disabled
               placeholder="Tu fecha de nacimiento"
             />
           </div>
           <label class="label" for="email">Correo electrónico</label>
           <div class="placing">
             <MailIcon class="placing-icon" /><input
-              v-model="email"
               id="email"
               type="email"
+              disabled
               placeholder="tu@email.com"
             />
           </div>
@@ -99,9 +72,9 @@ async function handleRegister() {
           <div class="placing">
             <LockerIcon class="placing-icon" />
             <input
-              v-model="password"
               id="password"
               :type="showPassword ? 'text' : 'password'"
+              disabled
               placeholder="Tu contraseña"
             />
             <button
@@ -119,9 +92,9 @@ async function handleRegister() {
           <div class="placing">
             <LockerIcon class="placing-icon" />
             <input
-              v-model="passwordConfirm"
               id="password-confirm"
               :type="showPasswordConfirm ? 'text' : 'password'"
+              disabled
               placeholder="Repite tu contraseña"
             />
             <button
@@ -139,40 +112,33 @@ async function handleRegister() {
 
           <div class="conditions">
             <label class="checkbox-row">
-              <input v-model="wantsPremium" type="checkbox" />
+              <input type="checkbox" disabled />
               <span>
                 Quiero registrarme como usuario premium y recibir la newsletter de Chronic Project.
               </span>
             </label>
 
             <label class="checkbox-row">
-              <input v-model="acceptedTerms" type="checkbox" />
+              <input type="checkbox" disabled />
               <span>Acepto los términos y condiciones (ver al final de página).</span>
             </label>
           </div>
 
-          <div class="error-registration" v-if="errorMessage">
-            <p>{{ errorMessage }}</p>
-          </div>
-
-          <button class="register-button" type="submit">Registrar</button>
+          <button class="register-button" type="button" disabled>
+            Registro no disponible en la demo
+          </button>
         </form>
 
-        <div class="success-registration" v-if="successMessage && currentUser">
-          <h2 class="success-title">{{ successMessage }}</h2>
-          <p>Usuario {{ currentUser.name }} registrado</p>
-          <p>Tu usuario: {{ currentUser.email }}</p>
-          <p>Tu tipo de cuenta: {{ currentUser.subscription_type }}</p>
-          <RouterLink to="/login">Inicia sesión</RouterLink>
-        </div>
-
-        <div v-if="!currentUser" class="hook-user">
-          <p>¿Ya estas registrado?</p>
-          <RouterLink to="/login">Accede aquí</RouterLink>
+        <div class="demo-access">
+          <p>
+            Para probar la demo pública, utiliza las cuentas demo indicadas en la documentación
+            del proyecto.
+          </p>
+          <RouterLink class="demo-login-link" to="/login">Ir al login</RouterLink>
         </div>
       </div>
     </section>
-    <div v-if="!currentUser" class="registration-terms">
+    <div class="registration-terms">
       <div class="registration-terms-logo">
         <AtentionIcon />
       </div>
@@ -235,6 +201,30 @@ async function handleRegister() {
   margin: 8px;
 }
 
+.register-demo-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 8px;
+  padding: 1rem;
+  border: 1px solid var(--color-success-border);
+  border-radius: 0.8rem;
+  background-color: var(--color-success-soft);
+  color: var(--color-text);
+}
+
+.register-demo-notice strong {
+  color: var(--color-primary-dark);
+}
+
+.register-demo-notice p {
+  margin: 0;
+}
+
+.register-preview {
+  opacity: 0.78;
+}
+
 .label {
   font-weight: 600;
 }
@@ -260,6 +250,16 @@ async function handleRegister() {
   padding: 0.8rem;
   border-left: 1px solid var(--color-border);
 }
+
+.placing input:disabled,
+.conditions input:disabled {
+  cursor: not-allowed;
+}
+
+.placing input:disabled {
+  color: var(--color-text-muted);
+  background-color: var(--color-bg);
+}
 .placing .placing-icon {
   flex-shrink: 0;
 }
@@ -281,12 +281,6 @@ async function handleRegister() {
   width: 1.1rem;
   height: 1.1rem;
 }
-.forgot {
-  text-align: center;
-  font-weight: 600;
-  color: var(--color-primary);
-  font-size: 14px;
-}
 .register-button {
   text-align: center;
   border: none;
@@ -297,66 +291,38 @@ async function handleRegister() {
   padding: 0.8rem;
   cursor: pointer;
 }
-.hook-user {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin: 16px;
+
+.register-button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
 }
-.hook-user p {
-  margin: 0;
-}
-.hook-user a {
-  text-decoration: none;
-  color: var(--color-primary);
-}
-.success-registration {
+
+.demo-access {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.8rem;
   margin: 1rem 8px 0;
-  padding: 1rem;
-  border: 1px solid var(--color-primary);
-  border-radius: 0.8rem;
+  padding: 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
   background-color: var(--color-bg);
 }
 
-.success-registration p {
+.demo-access p {
   margin: 0;
   color: var(--color-text);
 }
 
-.success-registration .success-title {
-  font-weight: 700;
-  color: var(--color-primary-dark);
-}
-
-.success-registration a {
+.demo-access a {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  margin-top: 0.5rem;
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.4rem;
   background-color: var(--color-primary);
   color: var(--color-bg);
   text-decoration: none;
   font-weight: 600;
-}
-
-.error-registration {
-  margin: 1rem 8px 0;
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--color-danger);
-  border-radius: 0.6rem;
-  background-color: var(--color-bg);
-}
-
-.error-registration p {
-  margin: 0;
-  color: var(--color-danger);
-  font-weight: 600;
-  text-align: center;
 }
 .registration-terms {
   display: flex;
@@ -417,31 +383,8 @@ async function handleRegister() {
     font-size: 24px;
   }
 
-  .forgot {
-    font-size: 20px;
-  }
-
   .register-button {
     font-size: 24px;
-  }
-
-  .hook-user p {
-    font-size: 24px;
-  }
-
-  .hook-user a {
-    font-size: 24px;
-  }
-  .success-registration {
-    font-size: 22px;
-  }
-
-  .success-registration a {
-    font-size: 22px;
-  }
-
-  .error-registration {
-    font-size: 22px;
   }
   .registration-terms-logo {
     width: 70px;
@@ -468,11 +411,6 @@ async function handleRegister() {
     width: 100%;
     max-width: 720px;
   }
-  .hook-user {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
   .placing {
     display: flex;
     align-items: center;
@@ -497,19 +435,8 @@ async function handleRegister() {
     border-left: 1px solid var(--color-border);
   }
 
-  .success-registration {
+  .demo-access {
     margin: 1rem 0 0;
-    padding: 0.9rem;
-  }
-
-  .success-registration a {
-    width: 100%;
-    padding: 0.7rem;
-  }
-
-  .error-registration {
-    margin: 1rem 0 0;
-    padding: 0.8rem;
   }
 
   .registration-terms-text h3 {
