@@ -1,23 +1,16 @@
 import { API_BASE_URL } from '@/config/api'
 import { createApiError } from '@/utils/apiErrors'
+import Http from './user'
 
 export async function getCurrentUser() {
-  const token = localStorage.getItem('access_token')
+  const http = new Http(null, null, 'users/me')
 
-  const respuesta = await fetch(`${API_BASE_URL}/users/me`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  const data = await respuesta.json()
-
-  if (!respuesta.ok) {
-    throw createApiError(data, 'No se ha podido obtener el usuario', respuesta.status)
+  try {
+    const data = await http.get()
+    return data
+  } catch (error) {
+    throw error
   }
-
-  return data
 }
 export async function updateCurrentUser(userData) {
   const token = localStorage.getItem('access_token')
